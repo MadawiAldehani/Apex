@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { USER_ID } from '@/lib/user'
+import { getServerUser } from '@/lib/auth'
 import MealLogger from '@/components/diet/MealLogger'
 import WaterTracker from '@/components/diet/WaterTracker'
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/Card'
@@ -7,8 +7,9 @@ import { Trash2 } from 'lucide-react'
 import DeleteMealButton from '@/components/diet/DeleteMealButton'
 
 export default async function DietPage() {
+  const user = await getServerUser()
   const supabase = await createClient()
-  const userId = USER_ID
+  const userId = user.id
 
   const today = new Date().toISOString().split('T')[0]
 

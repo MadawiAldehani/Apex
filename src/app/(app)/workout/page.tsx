@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { USER_ID } from '@/lib/user'
+import { getServerUser } from '@/lib/auth'
 import WorkoutLogger from '@/components/workout/WorkoutLogger'
 import AIWorkoutCoach from '@/components/workout/AIWorkoutCoach'
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/Card'
@@ -8,8 +8,9 @@ import Badge from '@/components/ui/Badge'
 import { Star, Clock, Flame } from 'lucide-react'
 
 export default async function WorkoutPage() {
+  const user = await getServerUser()
   const supabase = await createClient()
-  const userId = USER_ID
+  const userId = user.id
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
 

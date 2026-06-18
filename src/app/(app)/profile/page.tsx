@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { USER_ID } from '@/lib/user'
+import { getServerUser } from '@/lib/auth'
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/Card'
 import ProfileEditor from '@/components/profile/ProfileEditor'
 import GoalsManager from '@/components/profile/GoalsManager'
@@ -7,8 +7,9 @@ import AIProfileAdvisor from '@/components/profile/AIProfileAdvisor'
 import { calculateBMI, calculateBMR, getBMICategory, goalLabel, activityLabel } from '@/lib/utils'
 
 export default async function ProfilePage() {
+  const user = await getServerUser()
   const supabase = await createClient()
-  const userId = USER_ID
+  const userId = user.id
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
 

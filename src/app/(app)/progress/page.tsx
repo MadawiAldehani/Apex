@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { USER_ID } from '@/lib/user'
+import { getServerUser } from '@/lib/auth'
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/Card'
 import WeightChart from '@/components/dashboard/WeightChart'
 import CalorieChart from '@/components/dashboard/CalorieChart'
@@ -10,8 +10,9 @@ import { formatDate, calculateBMI, getBMICategory } from '@/lib/utils'
 import { ImageIcon, FileText } from 'lucide-react'
 
 export default async function ProgressPage() {
+  const user = await getServerUser()
   const supabase = await createClient()
-  const userId = USER_ID
+  const userId = user.id
 
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single()
 

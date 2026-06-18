@@ -1,15 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
-import { USER_ID } from '@/lib/user'
+import { getServerUser } from '@/lib/auth'
 import Sidebar from '@/components/layout/Sidebar'
 import BottomNav from '@/components/layout/BottomNav'
 import MobileHeader from '@/components/layout/MobileHeader'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const user = await getServerUser()
   const supabase = await createClient()
   const { data: profile } = await supabase
     .from('profiles')
     .select('name')
-    .eq('id', USER_ID)
+    .eq('id', user.id)
     .single()
 
   return (

@@ -1,10 +1,13 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Dumbbell, UtensilsCrossed,
-  TrendingUp, User,
+  TrendingUp, User, LogOut,
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
+import ThemeToggle from './ThemeToggle'
 
 function ApexIcon({ size = 18 }: { size?: number }) {
   return (
@@ -14,8 +17,6 @@ function ApexIcon({ size = 18 }: { size?: number }) {
     </svg>
   )
 }
-import { cn } from '@/lib/utils'
-import ThemeToggle from './ThemeToggle'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -27,6 +28,14 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-[rgb(var(--card))] border-r border-[rgb(var(--border))] flex-col z-40">
@@ -65,12 +74,19 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom – theme toggle only */}
-      <div className="p-4 border-t border-[rgb(var(--border))]">
-        <div className="flex items-center justify-between px-3">
+      {/* Bottom */}
+      <div className="p-4 border-t border-[rgb(var(--border))] space-y-1">
+        <div className="flex items-center justify-between px-3 mb-2">
           <span className="text-xs text-[rgb(var(--muted-foreground))]">Theme</span>
           <ThemeToggle />
         </div>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium w-full text-[rgb(var(--muted-foreground))] hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 transition-all"
+        >
+          <LogOut size={18} />
+          Sign out
+        </button>
       </div>
     </aside>
   )
