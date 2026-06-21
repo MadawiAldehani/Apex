@@ -3,8 +3,6 @@ import { useState } from 'react'
 import { CreditCard, Loader2, AlertCircle, X, Check, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const ANON_KEY     = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 const PAYMENT_METHODS = [
   {
@@ -84,13 +82,9 @@ export default function CheckoutButton({ total }: Props) {
       const callbackUrl = `${origin}/cart?payment=success`
       const errorUrl    = `${origin}/cart?payment=failed`
 
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/myfatoorah-checkout`, {
+      const res = await fetch('/api/checkout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': ANON_KEY,
-          'Authorization': `Bearer ${ANON_KEY}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           total,
           paymentMethodId: selected,
