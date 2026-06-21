@@ -21,7 +21,7 @@ export default async function CartPage({
     .eq('user_id', user.id)
     .order('created_at')
 
-  const items = (rawItems ?? []) as {
+  const items = (rawItems ?? []) as unknown as {
     id: string
     quantity: number
     product_id: string

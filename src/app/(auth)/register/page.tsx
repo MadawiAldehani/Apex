@@ -55,14 +55,16 @@ export default function RegisterPage() {
     }
 
     if (data.user) {
-      // Migrate demo data to the new account (runs silently, safe to ignore errors)
-      await supabase.rpc('claim_demo_data').then(() => {
-        // After claim, ensure the profile exists with the user's name
-        return supabase.from('profiles').upsert(
-          { id: data.user!.id, name, units: 'metric' },
+      // Migrate demo data and upsert profile — runs silently, errors are safe to ignore
+      try {
+        await supabase.rpc('claim_demo_data')
+        await supabase.from('profiles').upsert(
+          { id: data.user.id, name, units: 'metric' },
           { onConflict: 'id', ignoreDuplicates: true }
         )
-      }).catch(() => {/* ignore */})
+      } catch {
+        // non-fatal — continue to dashboard regardless
+      }
     }
 
     router.push('/dashboard')
