@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Dumbbell, UtensilsCrossed,
-  TrendingUp, User, LogOut,
+  TrendingUp, User, LogOut, ShoppingBag, ShoppingCart,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -23,6 +23,8 @@ const navItems = [
   { href: '/workout',   label: 'Workout',   icon: Dumbbell },
   { href: '/diet',      label: 'Diet',      icon: UtensilsCrossed },
   { href: '/progress',  label: 'Progress',  icon: TrendingUp },
+  { href: '/shop',      label: 'Shop',      icon: ShoppingBag },
+  { href: '/cart',      label: 'Cart',      icon: ShoppingCart },
   { href: '/profile',   label: 'Profile',   icon: User },
 ]
 

@@ -1,15 +1,15 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Dumbbell, UtensilsCrossed, TrendingUp, User } from 'lucide-react'
+import { LayoutDashboard, Dumbbell, UtensilsCrossed, ShoppingBag, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { href: '/dashboard', label: 'Home',     icon: LayoutDashboard },
-  { href: '/workout',   label: 'Workout',  icon: Dumbbell },
-  { href: '/diet',      label: 'Diet',     icon: UtensilsCrossed },
-  { href: '/progress',  label: 'Progress', icon: TrendingUp },
-  { href: '/profile',   label: 'Profile',  icon: User },
+  { href: '/dashboard', label: 'Home',    icon: LayoutDashboard },
+  { href: '/workout',   label: 'Workout', icon: Dumbbell },
+  { href: '/diet',      label: 'Diet',    icon: UtensilsCrossed },
+  { href: '/shop',      label: 'Shop',    icon: ShoppingBag },
+  { href: '/profile',   label: 'Profile', icon: User },
 ]
 
 export default function BottomNav() {
@@ -25,9 +25,7 @@ export default function BottomNav() {
               href={href}
               className={cn(
                 'flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors',
-                active
-                  ? 'text-emerald-500'
-                  : 'text-[rgb(var(--muted-foreground))]'
+                active ? 'text-emerald-500' : 'text-[rgb(var(--muted-foreground))]'
               )}
             >
               <div className={cn(
