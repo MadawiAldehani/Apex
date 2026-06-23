@@ -79,8 +79,8 @@ export default function CheckoutButton({ total }: Props) {
       const { data: { user } } = await supabase.auth.getUser()
 
       const origin      = window.location.origin
-      const callbackUrl = `${origin}/cart?payment=success`
-      const errorUrl    = `${origin}/cart?payment=failed`
+      const callbackUrl = `${origin}/payment/success`
+      const errorUrl    = `${origin}/payment/error`
 
       const res = await fetch('/api/checkout', {
         method: 'POST',

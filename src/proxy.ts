@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -25,15 +25,18 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isAuthRoute   = pathname === '/login' || pathname === '/register'
-  const isPublicRoute = pathname === '/' || isAuthRoute
 
-  // Redirect unauthenticated users to login
-  if (!user && !isPublicRoute) {
+  const isAuthRoute    = pathname === '/login' || pathname === '/register'
+  const isPublicRoute  = pathname === '/' || isAuthRoute
+  const isApiRoute     = pathname.startsWith('/api/')          // API routes handle their own auth
+  const isPaymentRoute = pathname.startsWith('/payment/')       // payment result pages — must work post-redirect
+
+  // Redirect unauthenticated users to login (skip for public / api / payment routes)
+  if (!user && !isPublicRoute && !isApiRoute && !isPaymentRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect authenticated users away from login/register
+  // Redirect authenticated users away from login / register
   if (user && isAuthRoute) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
