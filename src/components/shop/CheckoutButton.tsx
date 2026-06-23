@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { CreditCard, Loader2, AlertCircle, X, Check, ChevronRight } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 
 const PAYMENT_METHODS = [
@@ -75,21 +74,18 @@ export default function CheckoutButton({ total }: Props) {
     setStep('loading')
     setError(null)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
       const origin      = window.location.origin
       const callbackUrl = `${origin}/payment/success`
       const errorUrl    = `${origin}/payment/error`
 
+      // Only the chosen payment method and callbacks are sent. The amount and
+      // customer identity are derived server-side from the cart + session, so a
+      // tampered request can't change what gets charged.
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          total,
           paymentMethodId: selected,
-          customerName:  user?.user_metadata?.name  || 'Apex Customer',
-          customerEmail: user?.email                || 'customer@apex.app',
           callbackUrl,
           errorUrl,
         }),
