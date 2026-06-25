@@ -5,6 +5,7 @@ import WaterTracker from '@/components/diet/WaterTracker'
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/Card'
 import { Trash2 } from 'lucide-react'
 import DeleteMealButton from '@/components/diet/DeleteMealButton'
+import { mediaSrc } from '@/lib/media'
 
 export default async function DietPage() {
   const user = await getServerUser()
@@ -114,7 +115,7 @@ export default async function DietPage() {
                             <div className="flex items-center gap-2.5 min-w-0">
                               {meal.image_url && (
                                 <img
-                                  src={meal.image_url}
+                                  src={mediaSrc(meal.image_url)}
                                   alt={meal.name}
                                   className="w-10 h-10 rounded-lg object-cover shrink-0 border border-[rgb(var(--border))]"
                                 />

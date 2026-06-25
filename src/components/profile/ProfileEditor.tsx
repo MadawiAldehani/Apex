@@ -8,6 +8,7 @@ import Select from '@/components/ui/Select'
 import FileUpload from '@/components/ui/FileUpload'
 import { Profile } from '@/types'
 import { CheckCircle2 } from 'lucide-react'
+import { mediaSrc } from '@/lib/media'
 
 const activityOptions = [
   { value: 'gym', label: 'Gym' },
@@ -86,7 +87,7 @@ export default function ProfileEditor({ userId, profile }: { userId: string; pro
         <div className="relative shrink-0">
           {avatarUrl ? (
             <img
-              src={avatarUrl}
+              src={mediaSrc(avatarUrl) ?? avatarUrl}
               alt="Profile photo"
               className="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-400"
               onError={(e) => { setAvatarUrl(null) }}

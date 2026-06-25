@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Upload, X, FileText, Loader2, ImageIcon } from 'lucide-react'
+import { mediaSrc } from '@/lib/media'
 
 /** Convert HEIC/HEIF files to JPEG so all browsers can display them */
 async function convertHeicToJpeg(file: File): Promise<File> {
@@ -90,8 +91,9 @@ export default function FileUpload({
 
       if (uploadError) throw uploadError
 
-      const { data } = supabase.storage.from('tracking-progress').getPublicUrl(path)
-      onUpload(data.publicUrl)
+      // Store the storage path, not a public URL.
+      // The private bucket serves files via /api/media (authenticated proxy).
+      onUpload(path)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Upload failed'
       setError(msg)
@@ -136,7 +138,7 @@ export default function FileUpload({
           <div className="relative group">
             {preview && !isPDF(preview) ? (
               <img
-                src={preview}
+                src={mediaSrc(preview) ?? preview}
                 alt="Upload preview"
                 className="w-16 h-16 rounded-xl object-cover border border-[rgb(var(--border))]"
               />
@@ -205,7 +207,7 @@ export default function FileUpload({
         <div className="relative group rounded-2xl overflow-hidden border border-[rgb(var(--border))]">
           {preview && !isPDF(preview) ? (
             <img
-              src={preview}
+              src={mediaSrc(preview) ?? preview}
               alt="Uploaded preview"
               className="w-full max-h-48 object-cover"
             />

@@ -57,7 +57,7 @@ export default function MealLogger({ userId, favorites }: { userId: string; favo
       const res = await fetch('/api/analyze-food', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: url }),
+        body: JSON.stringify({ storagePath: url }),
       })
 
       if (res.status === 503) {

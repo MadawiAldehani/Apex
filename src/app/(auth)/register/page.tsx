@@ -27,8 +27,8 @@ export default function RegisterPage() {
 
   // Simple password strength indicator
   const pwStrength = password.length === 0 ? 0
-    : password.length < 6  ? 1
-    : password.length < 10 ? 2
+    : password.length < 8  ? 1
+    : password.length < 12 ? 2
     : 3
 
   const strengthLabel = ['', 'Weak', 'Good', 'Strong']
@@ -36,7 +36,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
     setLoading(true)
     setError(null)
 
@@ -119,7 +119,7 @@ export default function RegisterPage() {
                 <Input
                   label="Password"
                   type={showPass ? 'text' : 'password'}
-                  placeholder="At least 6 characters"
+                  placeholder="At least 8 characters"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required

@@ -1,5 +1,7 @@
 import Link from 'next/link'
-import { LayoutDashboard, ShoppingBag } from 'lucide-react'
+import { redirect } from 'next/navigation'
+import { LayoutDashboard, ShoppingBag, Package } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
 
 function ApexIcon() {
   return (
@@ -10,7 +12,33 @@ function ApexIcon() {
   )
 }
 
-export default function PaymentSuccessPage() {
+export default async function PaymentSuccessPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ orderId?: string }>
+}) {
+  const { orderId } = await searchParams
+
+  // No orderId means someone navigated here directly — send them away
+  if (!orderId) redirect('/shop')
+
+  // Load the order server-side (RLS ensures only the owner can read it)
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: order } = await supabase
+    .from('orders')
+    .select('id, invoice_id, amount, currency, status, items, paid_at')
+    .eq('id', orderId)
+    .eq('user_id', user.id)
+    .single()
+
+  // If order not found or not paid, redirect to cart
+  if (!order || order.status !== 'paid') redirect('/cart')
+
+  const items = (order.items ?? []) as { name: string; quantity: number; price: number }[]
+
   return (
     <div className="min-h-screen bg-[rgb(var(--background))] flex flex-col items-center justify-center p-6">
       {/* Apex logo */}
@@ -26,7 +54,6 @@ export default function PaymentSuccessPage() {
 
         {/* Animated checkmark */}
         <div className="relative">
-          {/* Outer pulse ring */}
           <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
           <div className="relative w-20 h-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center">
             <svg
@@ -51,14 +78,36 @@ export default function PaymentSuccessPage() {
         </div>
 
         {/* Text */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           <h1 className="text-2xl font-bold text-[rgb(var(--foreground))]">Payment successful!</h1>
-          <p className="text-sm text-[rgb(var(--muted-foreground))] leading-relaxed">
-            Your order has been confirmed and is being processed. You&apos;ll receive a confirmation email shortly.
+          <p className="text-sm text-[rgb(var(--muted-foreground))]">
+            Order confirmed · {order.amount.toFixed(3)} {order.currency}
           </p>
         </div>
 
-        {/* Divider */}
+        {/* Order items */}
+        {items.length > 0 && (
+          <div className="w-full text-left space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[rgb(var(--muted-foreground))] uppercase tracking-wide">
+              <Package size={12} /> Your order
+            </div>
+            {items.map((item, i) => (
+              <div key={i} className="flex justify-between text-sm">
+                <span className="text-[rgb(var(--foreground))] truncate mr-2">
+                  {item.name}{item.quantity > 1 ? ` ×${item.quantity}` : ''}
+                </span>
+                <span className="text-[rgb(var(--muted-foreground))] shrink-0">
+                  {(item.price * item.quantity).toFixed(3)}
+                </span>
+              </div>
+            ))}
+            <div className="border-t border-[rgb(var(--border))] pt-2 flex justify-between font-semibold text-sm">
+              <span>Total</span>
+              <span>{order.amount.toFixed(3)} {order.currency}</span>
+            </div>
+          </div>
+        )}
+
         <div className="w-full h-px bg-[rgb(var(--border))]" />
 
         {/* CTAs */}
@@ -80,7 +129,6 @@ export default function PaymentSuccessPage() {
         </div>
       </div>
 
-      {/* Inline animation style */}
       <style>{`
         @keyframes draw-check {
           from { stroke-dashoffset: 30; }

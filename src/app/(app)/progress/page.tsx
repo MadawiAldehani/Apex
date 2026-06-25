@@ -8,6 +8,7 @@ import MoodLogger from '@/components/progress/MoodLogger'
 import AIProgressCoach from '@/components/progress/AIProgressCoach'
 import { formatDate, calculateBMI, getBMICategory } from '@/lib/utils'
 import { ImageIcon, FileText } from 'lucide-react'
+import { mediaSrc } from '@/lib/media'
 
 export default async function ProgressPage() {
   const user = await getServerUser()
@@ -133,13 +134,13 @@ export default async function ProgressPage() {
               {[...measurements].reverse().filter(m => m.photo_url).map((m) => (
                 <a
                   key={m.id}
-                  href={m.photo_url!}
+                  href={mediaSrc(m.photo_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative aspect-square rounded-xl overflow-hidden border border-[rgb(var(--border))] block"
                 >
                   <img
-                    src={m.photo_url!}
+                    src={mediaSrc(m.photo_url)}
                     alt={`Progress ${m.date}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                   />
@@ -224,9 +225,9 @@ export default async function ProgressPage() {
                       <td className="py-2.5 pr-4">
                         <div className="flex items-center gap-1.5">
                           {m.photo_url && (
-                            <a href={m.photo_url} target="_blank" rel="noopener noreferrer" title="View progress photo">
+                            <a href={mediaSrc(m.photo_url)} target="_blank" rel="noopener noreferrer" title="View progress photo">
                               <img
-                                src={m.photo_url}
+                                src={mediaSrc(m.photo_url)}
                                 alt="Progress"
                                 className="w-8 h-8 rounded-lg object-cover border border-[rgb(var(--border))] hover:scale-110 transition-transform"
                               />
@@ -234,7 +235,7 @@ export default async function ProgressPage() {
                           )}
                           {m.report_url && (
                             <a
-                              href={m.report_url}
+                              href={mediaSrc(m.report_url)}
                               target="_blank"
                               rel="noopener noreferrer"
                               title="View InBody report"

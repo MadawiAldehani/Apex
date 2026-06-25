@@ -1,42 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+
+// ── Per-user in-memory rate limit ────────────────────────────────────────────
+// Max 10 analyses per 60 s per server instance. For multi-instance deployments
+// replace with Upstash Redis or a DB-backed counter.
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT    = 10
+const RATE_WINDOW   = 60_000 // ms
+const MAX_BYTES     = 10 * 1024 * 1024 // 10 MB
+
+function checkRateLimit(userId: string): boolean {
+  const now   = Date.now()
+  const entry = rateLimitMap.get(userId)
+  if (!entry || entry.resetAt < now) {
+    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_WINDOW })
+    return true
+  }
+  if (entry.count >= RATE_LIMIT) return false
+  entry.count++
+  return true
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const { imageUrl } = await req.json()
-    if (!imageUrl) {
+    // ── Auth (H2 fix) ──────────────────────────────────────────────────────
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    }
+
+    // ── Rate limit ─────────────────────────────────────────────────────────
+    if (!checkRateLimit(user.id)) {
+      return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
+    }
+
+    const { storagePath } = await req.json()
+    if (!storagePath || typeof storagePath !== 'string') {
       return NextResponse.json({ error: 'no_image' }, { status: 400 })
+    }
+
+    // ── SSRF fix: download via authed Supabase client, not arbitrary fetch ─
+    // RLS enforces (storage.foldername(name))[2] = auth.uid(), so a user
+    // can only download their own files. We also check explicitly.
+    const segments = storagePath.split('/')
+    if (segments.length < 3 || segments[1] !== user.id) {
+      return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+    }
+
+    const { data: blob, error: dlError } = await supabase.storage
+      .from('tracking-progress')
+      .download(storagePath)
+
+    if (dlError || !blob) {
+      return NextResponse.json({ error: 'image_not_found' }, { status: 404 })
+    }
+
+    // ── Size cap ───────────────────────────────────────────────────────────
+    if (blob.size > MAX_BYTES) {
+      return NextResponse.json({ error: 'image_too_large' }, { status: 413 })
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
-      // Feature works but AI is not configured — let the client show a graceful message
       return NextResponse.json({ error: 'not_configured' }, { status: 503 })
     }
 
-    // Download the image from Supabase Storage and encode it as base64
-    const imgRes = await fetch(imageUrl)
-    if (!imgRes.ok) throw new Error(`Could not fetch image: ${imgRes.status}`)
-    const imgBuf = await imgRes.arrayBuffer()
+    const imgBuf     = await blob.arrayBuffer()
     const base64Data = Buffer.from(imgBuf).toString('base64')
-    const mimeType = (imgRes.headers.get('content-type') ?? 'image/jpeg').split(';')[0]
+    const mimeType   = (blob.type || 'image/jpeg').split(';')[0]
 
-    // Call Claude with vision
+    // ── Call Claude with vision ────────────────────────────────────────────
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
+        'x-api-key':         apiKey,
         'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
+        'content-type':      'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model:      'claude-3-5-haiku-20241022',
         max_tokens: 512,
         messages: [
           {
             role: 'user',
             content: [
               {
-                type: 'image',
+                type:   'image',
                 source: { type: 'base64', media_type: mimeType, data: base64Data },
               },
               {
@@ -65,17 +115,25 @@ Guidelines:
       return NextResponse.json({ error: 'api_error' }, { status: 500 })
     }
 
-    const apiData = await anthropicRes.json()
+    const apiData  = await anthropicRes.json()
     const rawText: string = apiData.content?.[0]?.text ?? ''
 
-    // Extract the JSON object from the response
     const jsonMatch = rawText.match(/\{[\s\S]*?\}/)
     if (!jsonMatch) {
       console.error('[analyze-food] Could not parse JSON from:', rawText)
       return NextResponse.json({ error: 'parse_error' }, { status: 500 })
     }
 
-    const result = JSON.parse(jsonMatch[0])
+    // ── Validate and clamp output values (LLM05) ──────────────────────────
+    const raw = JSON.parse(jsonMatch[0])
+    const result = {
+      name:      typeof raw.name === 'string' ? raw.name.slice(0, 200) : 'Unknown food',
+      calories:  Math.max(0, Math.min(10000, Math.round(Number(raw.calories)  || 0))),
+      protein_g: Math.max(0, Math.min(1000,  Math.round(Number(raw.protein_g) * 10) / 10 || 0)),
+      carbs_g:   Math.max(0, Math.min(1000,  Math.round(Number(raw.carbs_g)   * 10) / 10 || 0)),
+      fat_g:     Math.max(0, Math.min(1000,  Math.round(Number(raw.fat_g)     * 10) / 10 || 0)),
+    }
+
     return NextResponse.json(result)
   } catch (err) {
     console.error('[analyze-food] Unexpected error:', err)

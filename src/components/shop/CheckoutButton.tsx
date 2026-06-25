@@ -74,21 +74,13 @@ export default function CheckoutButton({ total }: Props) {
     setStep('loading')
     setError(null)
     try {
-      const origin      = window.location.origin
-      const callbackUrl = `${origin}/payment/success`
-      const errorUrl    = `${origin}/payment/error`
-
-      // Only the chosen payment method and callbacks are sent. The amount and
-      // customer identity are derived server-side from the cart + session, so a
-      // tampered request can't change what gets charged.
+      // Only the chosen payment method is sent. Amount, customer identity,
+      // and callback URLs are all derived server-side — nothing here can be
+      // tampered to change what gets charged or where the callback goes.
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          paymentMethodId: selected,
-          callbackUrl,
-          errorUrl,
-        }),
+        body: JSON.stringify({ paymentMethodId: selected }),
       })
 
       const data = await res.json()
